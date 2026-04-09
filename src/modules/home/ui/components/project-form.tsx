@@ -15,6 +15,7 @@ import { Field } from "@/components/ui/field"
 import { error } from "node:console"
 import { useRouter } from "next/navigation"
 import { PROJECT_TEMPLATES } from "@/constant"
+import { useClerk } from "@clerk/nextjs"
 
 
  
@@ -28,7 +29,7 @@ const formSchema=  z.object({
     const router = useRouter()
     const trpc=useTRPC()
     const queryClient=useQueryClient()
-
+   const clerk=useClerk()
 
 
     const form =useForm<z.infer<typeof formSchema>>({
@@ -48,8 +49,13 @@ const formSchema=  z.object({
             //TODO reinvalidate
         },
         onError:(error)=>{
-            //TODO redirect to princing page if the credit isn over
             toast.error(error.message)
+            if(error.data?.code==="UNAUTHORIZED"){
+                clerk.openSignIn();
+            }
+            //TODO redirect to princing page if the credit isn over
+
+            
         }
   } ))
     const onSubmit= async (values:z.infer<typeof formSchema>)=>{

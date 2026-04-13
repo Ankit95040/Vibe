@@ -45,15 +45,19 @@ const formSchema=  z.object({
             queryClient.invalidateQueries(
                 trpc.projects.getMany.queryOptions(),
             );
+            
             router.push(`/projects/${data.id}`)
-            //TODO reinvalidate
+            
         },
         onError:(error)=>{
             toast.error(error.message)
             if(error.data?.code==="UNAUTHORIZED"){
                 clerk.openSignIn();
             }
-            //TODO redirect to princing page if the credit isn over
+           if(error.data?.code==="TOO_MANY_REQUESTS"){
+            router.push("/pricing")
+           }
+
 
             
         }

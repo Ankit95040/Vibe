@@ -12,6 +12,8 @@ import {Form,FormField} from "@/components/ui/form"
 import z from "zod"
 import { Field } from "@/components/ui/field"
 import { error } from "node:console"
+import { Usage } from "./usage"
+import { useRouter } from "next/navigation"
 interface Props{
     projectId:string
 }
@@ -25,7 +27,9 @@ const formSchema=  z.object({
  export const MessageForm=({projectId}:Props)=>{
     
     const trpc=useTRPC()
+    const router=useRouter();
     const queryClient=useQueryClient()
+   const {data:usage} = useQuery(trpc.usage.status.queryOptions());
 
 
 
@@ -42,11 +46,17 @@ const formSchema=  z.object({
             queryClient.invalidateQueries(
                 trpc.messages.getMany.queryOptions({projectId})
             )
-            //TODO reinvalidate
+           queryClient.invalidateQueries(
+            trpc.usage.status.queryOptions()
+           )
         },
         onError:(error)=>{
-            //TODO redirect to princing page if the credit isn over
+           
             toast.error(error.message)
+            if(error.data?.code === "TOO_MANY_REQUESTS"){
+                router.push("/pricing")
+            }
+
         }
   } ))
     const onSubmit= async (values:z.infer<typeof formSchema>)=>{
@@ -57,13 +67,19 @@ const formSchema=  z.object({
     }
 
     const [isFocused,setisFocused]=useState(false)
-    const showUsage=false;
+    const showUsage=!!usage;
     const isPending=createMessage.isPending
     const isButtonDisabled=isPending || !form.formState.isValid
-
+   
 
     return (
        <Form {...form}>
+        {showUsage && (
+            <Usage
+            points={usage.remainingPoints}
+            msBeforeNext={usage.msBeforeNext}
+            />
+        )}
          <form
          onSubmit={form.handleSubmit(onSubmit)}
          className={cn(

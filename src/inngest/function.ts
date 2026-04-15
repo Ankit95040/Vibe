@@ -21,7 +21,10 @@ export const codeAgentFunction = inngest.createFunction(
     
 
     const sandboxId = await step.run("get-sandbox-id", async () => {
+
       const sandbox = await Sandbox.create("my-app-02");
+
+      await sandbox.setTimeout(60_000*30 );//sandbox will be alived for an hour
       return sandbox.sandboxId;
     });
 
@@ -34,7 +37,8 @@ export const codeAgentFunction = inngest.createFunction(
         orderBy:{
           createdAt:"desc" //todo:change to asc if ai doesnt underst the context of latest message
           
-        }
+        },
+        take:5
       })
       for(const message of messages){
          formattedMessages.push({
@@ -46,7 +50,7 @@ export const codeAgentFunction = inngest.createFunction(
 
          })
       }
-      return formattedMessages
+      return formattedMessages.reverse();
     })
     const state=createState<AgentState>({
       summary:"",

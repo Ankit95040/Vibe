@@ -22,7 +22,7 @@ export const MessagesContainer=({projectId,activeFragment,setActiveFragment}:Pro
           projectId:projectId,
         },{
     
-          refetchInterval:5000
+          refetchInterval:2000
         }),
 
       );

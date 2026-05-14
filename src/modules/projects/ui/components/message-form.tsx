@@ -121,19 +121,21 @@ const formSchema=  z.object({
                   </kbd>
                   &nbsp; to submit
                 </div>
-                <button 
-                disabled={isButtonDisabled}
-                className={cn(
-                    "size-8 rounded-full ",
-                    isButtonDisabled && "bg-muted-foreground border "
-                )}>
-                    {isPending?(
-                        <Loader2Icon className="size-4 animate-spin"/>
-                    ):(
-                        <ArrowUp01Icon/>
-                    )}
-                    <ArrowUp01Icon/>
-                </button>
+                <button
+  disabled={isButtonDisabled}
+  className={cn(
+    "size-8 rounded-full flex items-center justify-center",
+    isButtonDisabled
+      ? "bg-muted border"
+      : "bg-primary text-primary-foreground"
+  )}
+>
+  {isPending ? (
+    <Loader2Icon className="size-4 animate-spin" />
+  ) : (
+    <ArrowUp01Icon className="size-4" />
+  )}
+</button>
 
             </div>
 

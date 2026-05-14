@@ -14,8 +14,14 @@ interface AgentState{
 
 }
 export const codeAgentFunction = inngest.createFunction(
-  { id: "code-agent" },
-  { event: "code-agent/run" },
+  {
+    id: "code-agent",
+    triggers: [
+      {
+        event: "code-agent/run",
+      },
+    ],
+  },
   // event.data.value = "create a landing page"
   async ({ event, step }) => {
     
@@ -119,61 +125,69 @@ export const codeAgentFunction = inngest.createFunction(
           
         }),
         createTool({
-          name:"createOrUpdateFiles",
-          description:"Create or update file in sandboxId",
-          parameters:z.object({
-            files:z.array(
+          name: "createOrUpdateFiles",
+          description: "Create or update file in sandboxId",
+          parameters: z.object({
+            files: z.array(
               z.object({
-                path:z.string(),
-                content:z.string()
-              }),
+                path: z.string(),
+                content: z.string(),
+              })
             ),
-          }) as z.ZodTypeAny,
-          //this files is received by the llm and the handler just executes it
-          handler: async({files
-          },{step,network}:Tool.Options<AgentState>)=>{
-            const newFiles=await step?.run("createOrUpdateFiles",async()=>{
+          }),
+        
+          handler: async (input, { step, network }) => {
+            const { files } = input as {
+              files: { path: string; content: string }[];
+            };
+        
+            const newFiles = await step?.run("createOrUpdateFiles", async () => {
               try {
-                const updatedFiles=network.state.data.files || {};
-                const sandbox=await getSandbox(sandboxId);
-                for(const file of files){
-                  await sandbox.files.write(file.path,file.content);
-                  updatedFiles[file.path] = file.content
+                const updatedFiles = network.state.data.files || {};
+                const sandbox = await getSandbox(sandboxId);
+        
+                for (const file of files) {
+                  await sandbox.files.write(file.path, file.content);
+                  updatedFiles[file.path] = file.content;
                 }
+        
                 return updatedFiles;
               } catch (error) {
                 return String(error);
-                
               }
             });
-            if(typeof newFiles == "object" ){
+        
+            if (typeof newFiles === "object") {
               network.state.data.files = newFiles;
             }
-            
-          }
-            
+          },
         }),
         createTool({
-          name:"readFiles",
-          description:"Read files from the sandbox",
-          parameters:z.object({
-            files:z.array(z.string()),
-
+          name: "readFiles",
+          description: "Read files from the sandbox",
+          parameters: z.object({
+            files: z.array(z.string()),
           }),
-          handler:async({files},{step})=>{
-            return await step?.run("readFiles" ,async()=>{
+        
+          handler: async (input, { step }) => {
+            const { files } = input as { files: string[] };
+        
+            return await step?.run("readFiles", async () => {
               try {
-                const sandbox=await getSandbox(sandboxId);
-                const contents=[];
-                for (const file of files){
-                  const content= await sandbox.files.read(file);
-                  contents.push({path:file,content});
-
+                const sandbox = await getSandbox(sandboxId);
+                const contents = [];
+        
+                for (const file of files) {
+                  const content = await sandbox.files.read(file);
+                  contents.push({
+                    path: file,
+                    content,
+                  });
                 }
+        
                 return JSON.stringify(contents);
-                
               } catch (error) {
-                return String (error);
+                return String(error);
                 
               }
             })
